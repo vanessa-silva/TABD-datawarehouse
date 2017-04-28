@@ -1,0 +1,13 @@
+create table dw_tempo(id int primary key not null, hora int not null, dia int not null, mes int not null);
+
+create table dw_local(id int primary key not null, stand_id int not null, freguesia text not null, concelho text not null);
+
+create table dw_taxi(id int primary key not null, n_licenca int not null);
+
+alter table taxi_services add column tempo_id int;
+alter table taxi_services add column local_id_Ini int;
+alter table taxi_services add column local_id_Fim int;
+alter table taxi_services add column nViagens int;
+alter table taxi_services add column tempoTotal int;
+
+alter table taxi_stands add column lotacao int;
