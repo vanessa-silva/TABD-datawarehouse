@@ -41,7 +41,7 @@ SITE UTIL
 https://wiki.postgresql.org/wiki/Using_psycopg2_with_PostgreSQL
 
 Importar o caop para o postgres
-- shp2pgsql -s 27493 -W Cont_Freg_V5.shp > caop.sql
+- shp2pgsql -s 27493 -W "LATIN9" Cont_Freg_V5.shp | psql -U guest guest
 
-- \i caop.sql
+- \i caop.sql #JA NAO É NECESSARIO ESTE COMANDO
 
