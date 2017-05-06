@@ -48,11 +48,14 @@ def transfereTaxiStands(cursor):
 	cursor.execute("select count(*) from taxi_stands")
 	nTuplos = cursor.fetchall()
 
+	cursor.execute("select id from taxi_stands")
+	ids = cursor.fetchall()
+
 	cursor.execute("select name from taxi_stands")
 	nomes = cursor.fetchall()
 	
 	for i in range(0,nTuplos[0][0]):
-		cursor.execute("insert into dw_stand (id, nome) values (%s, %s)", (i+1, nomes[i][0],))
+		cursor.execute("insert into dw_stand (id, nome) values (%s, %s)", (ids[i][0], nomes[i][0],))
 	
 
 def local(cursor):
