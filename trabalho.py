@@ -39,7 +39,7 @@ def cria_tabelas(cursor):
 	cursor.execute("create table dw_tempo(id int primary key not null, hora int not null, dia int not null, mes int not null)")
 	cursor.execute("create table dw_local(id int primary key not null, stand_id int not null, freguesia text not null, concelho text not null)")
 	cursor.execute("create table dw_taxi(id int primary key not null, n_licenca int not null)")
-	cursor.execute("create table dw_stand(id int primary key not null, nome text not null, lotacao int null)")
+	cursor.execute("create table dw_stand(id int primary key not null, nome text not null, lotacao int null, location text not null)")
 	cursor.execute("create table dw_taxi_services(id int primary key not null, taxi_id int not null, tempo_id int not null, localI_id int not null, localF_id int not null, nViagens int not null, tempoTotal int not null)")
 
 
@@ -54,8 +54,13 @@ def transfereTaxiStands(cursor):
 	cursor.execute("select name from taxi_stands")
 	nomes = cursor.fetchall()
 	
+	cursor.execute("select location from taxi_stands")
+	coordenadas = cursor.fetchall()
+
+	#print coordenadas[0][0]
+
 	for i in range(0,nTuplos[0][0]):
-		cursor.execute("insert into dw_stand (id, nome) values (%s, %s)", (ids[i][0], nomes[i][0],))
+		cursor.execute("insert into dw_stand (id, nome, location) values (%s, %s, %s)", (ids[i][0], nomes[i][0],coordenadas[i][0],))
 	
 
 def local(cursor):
