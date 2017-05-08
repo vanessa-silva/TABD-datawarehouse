@@ -57,29 +57,55 @@ def transfereTaxiStands(cursor):
 	cursor.execute("select location from taxi_stands")
 	coordenadas = cursor.fetchall()
 
-	#print coordenadas[0][0]
+	cursor.execute("select st_x(location) from taxi_stands")
+	coordenadas_x = cursor.fetchall()
+
+	cursor.execute("select st_y(location) from taxi_stands")
+	coordenadas_y = cursor.fetchall()
 
 	for i in range(0,nTuplos[0][0]):
 		cursor.execute("insert into dw_stand (id, nome, location) values (%s, %s, %s)", (ids[i][0], nomes[i][0],coordenadas[i][0],))
 	
 
+#id, stand_id, freguesia, concelho
 def local(cursor):
 
 	#Freguesia existentes no Porto
-	cursor.execute("select distinct count(freguesia) from cont_freg_v5 where distrito like 'PORTO'")
-	freguesia = cursor.fetchall()
+	cursor.execute("select distinct freguesia from cont_freg_v5 where distrito like 'PORTO'")
+	freguesia_r = cursor.fetchall()
 
 	#Concelhos existentos no porto
 	cursor.execute("select distinct concelho from cont_freg_v5 where distrito like 'PORTO'")
-	concelho = cursor.fetchall()
+	concelho_r = cursor.fetchall()
 
-	barra = "\d";
+	#numero de tupulos dos stands
+	cursor.execute("select count(*) from dw_stand")
+	nTuplos = cursor.fetchall()
 
-	#bar = cursor.fetchall()
-	#cursor.execute("%s", barra)
+	#coordenadas dos stands
+	cursor.execute("select location from dw_stand")
+	coordenadas = cursor.fetchall()
 
-#	pprint.pprint(barra[0])
+	stand_id = []
+	#stand_id 
+	for i in range(0,nTuplos[0][0]):
+		cursor.execute("select id from dw_stand where location like %s", (coordenadas[i][0],))
+		stand_id.append(cursor.fetchall()[i][0])
+		break
+	
+	print stand_id
 
+	#freguesia
+#	cursor.execute("select freguesia from cont_freg_v5 where distrito like 'PORTO' and geom like %s", (coordenada[i][0],))
+#	freguesia = cursor.fetchall()
+
+	#Concelhos 
+#	for i in range(0,nTuplos[0][0]):
+#		cursor.execute("select concelho from cont_freg_v5 where distrito like 'PORTO' and freguesia like %s", (freguesia[i][0],))
+#	concelho = cursor.fetchall()
+
+	#for i in range(0,nTuplos[0][0]):
+	#	cursor.execute("insert into dw_local (id, stand_id, freguesia, concelho) values (%s, %s, %s, %s)", (i, stand_id[i][0], freguesia[i][0],concelho[i][0],))
 
 if __name__ == "__main__":
 	main()
