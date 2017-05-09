@@ -2,6 +2,7 @@
 import psycopg2
 import sys
 import pprint
+import datetime
 
 #conn.set_client_encoding('LATIN9')
  
@@ -23,7 +24,9 @@ def main():
 	cria_tabelas(cursor)
 
 	transfereTaxiStands(cursor)
-	local(cursor)
+	#dw_local(cursor)
+	#dw_tempo(cursor)
+	dw_services(cursor)
 
 	conn.commit()
 	cursor.close()
@@ -36,7 +39,7 @@ def cria_tabelas(cursor):
 	cursor.execute("DROP TABLE IF EXISTS dw_taxi")
 	cursor.execute("DROP TABLE IF EXISTS dw_taxi_services")
 
-	cursor.execute("create table dw_tempo(id int primary key not null, hora int not null, dia int not null, mes int not null)")
+	cursor.execute("create table dw_tempo(id int primary key not null, hora text not null, dia text not null, mes text not null)")
 	cursor.execute("create table dw_local(id int primary key not null, stand_id int not null, freguesia text not null, concelho text not null)")
 	cursor.execute("create table dw_taxi(id int primary key not null, n_licenca int not null)")
 	cursor.execute("create table dw_stand(id int primary key not null, nome text not null, lotacao int null, location text not null)")
@@ -57,43 +60,55 @@ def transfereTaxiStands(cursor):
 	cursor.execute("select location from taxi_stands")
 	coordenadas = cursor.fetchall()
 
-	cursor.execute("select st_x(location) from taxi_stands")
-	coordenadas_x = cursor.fetchall()
-
-	cursor.execute("select st_y(location) from taxi_stands")
-	coordenadas_y = cursor.fetchall()
-
 	for i in range(0,nTuplos[0][0]):
 		cursor.execute("insert into dw_stand (id, nome, location) values (%s, %s, %s)", (ids[i][0], nomes[i][0],coordenadas[i][0],))
 	
 
 #id, stand_id, freguesia, concelho
-def local(cursor):
+def dw_local(cursor):
 
-	#Freguesia existentes no Porto
+	#Freguesias existentes no Porto
 	cursor.execute("select distinct freguesia from cont_freg_v5 where distrito like 'PORTO'")
 	freguesia_r = cursor.fetchall()
 
-	#Concelhos existentos no porto
+	#Concelhos existentes no porto
 	cursor.execute("select distinct concelho from cont_freg_v5 where distrito like 'PORTO'")
 	concelho_r = cursor.fetchall()
-
+	
 	#numero de tupulos dos stands
 	cursor.execute("select count(*) from dw_stand")
 	nTuplos = cursor.fetchall()
 
-	#coordenadas dos stands
-	cursor.execute("select location from dw_stand")
-	coordenadas = cursor.fetchall()
-
-	stand_id = []
-	#stand_id 
-	for i in range(0,nTuplos[0][0]):
-		cursor.execute("select id from dw_stand where location like %s", (coordenadas[i][0],))
-		stand_id.append(cursor.fetchall()[i][0])
-		break
+	cursor.execute("select id from dw_stand")
+	stand_id = cursor.fetchall()
 	
-	print stand_id
+	cursor.execute("select freguesia, concelho from cont_freg_v5 where distrito like 'PORTO' order by concelho")
+	freg_con = cursor.fetchall()
+
+
+	freg = [[]]
+	for i in range(0, len(concelho_r)):
+		for j in range(0, len(freg_con)):
+			if j == len(freg_con)-1:
+				freg[i].append(freg_con[j][0])
+				break
+
+			if freg_con[j][1] != freg_con[j+1][1]:
+				freg[i].append(freg_con[j][0]) 
+				break
+			else:
+				freg[i].append(freg_con[j][0])
+			
+		
+				
+	print len(freg[0])
+
+	#freg = [[]]
+	#for i in range(0,nTuplos[0][0]):
+	#	cursor.execute("select freguesia from cont_freg_v5 where concelho like %s", (concelho_r[i][0],))
+	#	freg[i].append(i)
+		
+	#print freg
 
 	#freguesia
 #	cursor.execute("select freguesia from cont_freg_v5 where distrito like 'PORTO' and geom like %s", (coordenada[i][0],))
@@ -107,5 +122,33 @@ def local(cursor):
 	#for i in range(0,nTuplos[0][0]):
 	#	cursor.execute("insert into dw_local (id, stand_id, freguesia, concelho) values (%s, %s, %s, %s)", (i, stand_id[i][0], freguesia[i][0],concelho[i][0],))
 
+
+#id, hora, dia, mes
+def dw_tempo(cursor):
+	cursor.execute("select TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second' from taxi_services")
+	tempoI = cursor.fetchall()
+
+	for i in range(len(tempoI)):
+		hora = str(tempoI[i][0])[11] + str(tempoI[i][0])[12]
+		dia = str(tempoI[i][0])[8] + str(tempoI[i][0])[9]
+		mes = str(tempoI[i][0])[5] + str(tempoI[i][0])[6]
+
+		cursor.execute("insert into dw_tempo (id, hora, dia, mes) values (%s, %s, %s, %s)", (i, hora, dia, mes))
+	
+
+def dw_services(cursor):
+
+	cursor.execute("select final_ts - initial_ts from taxi_services")
+	tempo = cursor.fetchall()
+	
+	for i in range(len(tempoI)):
+		str(datetime.timedelta(seconds=tempo[0][0]))
+
+	cursor.execute("select TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second' from taxi_services")
+	print cursor.fetchall()[0][0]	
+	cursor.execute("select TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second' from taxi_services")
+	print cursor.fetchall()[0][0]
+	
+	
 if __name__ == "__main__":
 	main()
