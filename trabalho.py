@@ -15,7 +15,7 @@ def cria_tabelas(cursor):
 	cursor.execute("DROP TABLE IF EXISTS dw_taxi_services CASCADE")
 
 	
-	cursor.execute("create table dw_stand(stand_id int not null, nome text not null, lotacao int null, location text not null, PRIMARY KEY (stand_id))")
+	cursor.execute("create table dw_stand(stand_id int not null, nome text not null, lotacao int null, PRIMARY KEY (stand_id))")
 
 	cursor.execute("create table dw_local(local_id int not null, stand_id int not null, freguesia text not null, concelho text not null, PRIMARY KEY (local_id, stand_id))")
 
@@ -62,7 +62,17 @@ def dw_local(cursor):
 	cursor.execute("select freguesia, concelho from cont_freg_v5 where distrito like 'PORTO' order by concelho")
 	freg_con = cursor.fetchall()
 
-	
+
+	cursor.execute("select location from dw_stand")
+	location = cursor.fetchall()
+
+	#select distinct freguesia from taxi_stands, cont_freg_v5 where st_contains(st_astext(cont_freg_v5.geom),st_astext(st_centroid(taxi_stands.location))) and distrito like 'PORTO';
+
+
+	for i in range(len(stand_id)):
+		cursor.execute("select freguesia from cont_freg_v5 where distrito like 'PORTO' and st_contains(st_centroid(geom), %s)", (location[i][0],) )
+		freguesia = cursor.fetchall()
+		print str(i+1) + ":" + str(freguesia)
 
 	freguesia = 'ALFENA'
 	
@@ -71,11 +81,11 @@ def dw_local(cursor):
 	concelho = cursor.fetchall()[0][0]
 
 	for i in range(len(stand_id)):
-		cursor.execute("insert into dw_local (local_id, stand_id, freguesia, concelho) values (%s, %s, %s, %s)", (i+1, stand_id[i][0], 0, concelho,))
+		#cursor.execute("insert into dw_local (local_id, stand_id, freguesia, concelho) values (%s, %s, %s, %s)", (i+1, stand_id[i][0], 0, concelho,))
+		cursor.execute("insert into dw_local (local_id, stand_id, freguesia, concelho) values (%s, %s, %s, %s)", (i+1, stand_id[i][0], 0, 0,))
 
 
-
-'''
+	'''
 	cursor.execute("select distinct concelho from cont_freg_v5 where distrito like 'PORTO'")
 	concelho_r = cursor.fetchall()
 
@@ -92,7 +102,7 @@ def dw_local(cursor):
 				freg[i].append(freg_con[j][0])		
 				
 	print len(freg[0])
-'''
+	'''
 	
 	
 
@@ -118,15 +128,33 @@ def dw_tempo(cursor):
 
 # (taxi_id, n_licenca)
 def dw_taxi(cursor):
+
+	cursor.execute("DROP TABLE IF EXISTS dw_taxi CASCADE")
+	cursor.execute("create table dw_taxi(taxi_id int not null, nViagens int not null, tempoTotal text not null, n_licenca int not null, PRIMARY KEY (taxi_id))")
+
 	#taxi_id
 	cursor.execute("select distinct taxi_id from taxi_services")
 	taxi_id = cursor.fetchall()
 
-	#numero de linhas que vao existir na tabela
-	nTuplos = len(taxi_id)
-	
-	for i in range(nTuplos):
-		cursor.execute("insert into dw_taxi (taxi_id, n_licenca) values (%s, %s)", (taxi_id[i][0], 0,))
+	for i in range(len(taxi_id)):
+		#nViagens por taxi
+		cursor.execute("select count(*) from taxi_services where taxi_id = %s", (str(taxi_id[i][0]),))
+		nViagens = cursor.fetchall()[0][0]		
+
+		#tempo total por taxi
+		cursor.execute("select initial_ts from taxi_services where taxi_id = %s", (str(taxi_id[i][0]),))
+		tempoI = cursor.fetchall()
+
+		cursor.execute("select final_ts from taxi_services where taxi_id = %s", (str(taxi_id[i][0]),))
+		tempoF = cursor.fetchall()
+
+		tempoTotal=0;
+		for j in range(nViagens):
+			tempoTotal += tempoF[j][0]-tempoI[j][0]
+		
+		tempoTotal = datetime.timedelta(seconds=tempoTotal)
+
+		cursor.execute("insert into dw_taxi (taxi_id, nViagens, tempoTotal, n_licenca) values (%s, %s, %s, %s)", (taxi_id[i][0], nViagens, tempoTotal, 0,))
 
 
 
@@ -140,7 +168,16 @@ def dw_services(cursor):
 
 	'''
 	ESTAMOS A FAZER AS PESQUISAS EM RELACAO AO TAXI ID MAS VAI SER EM RELACAO AO LOCAL_I LOCAL_F E TAXI_ID
-	'''
+	
+	#local_I_id
+	cursor.execute("select initial_point from taxi_services")
+	pontoI = cursor.fetchall()
+	
+	for i in range(len(pontoI)):
+		cursor.execute("select stand_id from dw_stand where location like %s", (pontoI[i][0],))
+		stand_id = cursor.fetchall()
+		print stand_id
+	'''	
 
 	#taxi_id
 	cursor.execute("select taxi_id from dw_taxi")
@@ -150,7 +187,7 @@ def dw_services(cursor):
 	nTuplos = len(taxi_id)
 	
 	for i in range(nTuplos):
-
+		break
 		#tempo_id
 		cursor.execute("select TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second', TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second' from taxi_services where taxi_id = %s", (str(taxi_id[i][0]),))
 		tempo = cursor.fetchall()
@@ -179,11 +216,11 @@ def dw_services(cursor):
 		tempoF = cursor.fetchall()
 
 		tempoTotal=0;
-		for j in range(nViagens[0][0]):
+		for j in range(nViagens):
 			tempoTotal += tempoF[j][0]-tempoI[j][0]
 			
 		tempoTotal = datetime.timedelta(seconds=tempoTotal)
-#		tempoTotal = (datetime.datetime.min + datetime.timedelta(seconds=tempoTotal)).time()		ESTA FORMA APRESENTA SO EM HORAS MAS DEPOIS FALTA OS DIAS
+
 		
 		if i==5:
 			break
@@ -201,10 +238,11 @@ if __name__ == "__main__":
  
 	#cria_tabelas(cursor)
 	#dw_stand(cursor)
-	#dw_taxi(cursor)
+	dw_taxi(cursor)
 	#dw_tempo(cursor)
-	dw_local(cursor)
-	dw_services(cursor)
+
+	#dw_local(cursor)
+	#dw_services(cursor)
 
 	conn.commit()
 	cursor.close()
