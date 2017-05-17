@@ -28,7 +28,6 @@ def cria_tabelas(cursor):
 
 
 
-#	(id, nome, lotacao)
 def dw_stand(cursor):
 
 	cursor.execute("select count(*) from taxi_stands")
@@ -43,7 +42,6 @@ def dw_stand(cursor):
 
 
 
-#	(id, stand_id, freguesia, concelho)
 def dw_local(cursor):
 
 	cursor.execute("DROP TABLE IF EXISTS dw_local CASCADE")	
@@ -65,10 +63,10 @@ def dw_local(cursor):
 		print str(i+1) + ":" + str(concelho)
 		
 		cursor.execute("insert into dw_local (local_id, stand_id, freguesia, concelho) values (%s, %s, %s, %s)", (i+1, stand_id[i][0], freguesia, concelho,))	
+
 	
 
 
-#	(id, hora, dia, mes)
 def dw_tempo(cursor):
 	cursor.execute("select TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second', TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second' from taxi_services")
 	tempo = cursor.fetchall()
@@ -87,7 +85,6 @@ def dw_tempo(cursor):
 
 
 
-# (taxi_id, n_licenca)
 def dw_taxi(cursor):
 
 	cursor.execute("DROP TABLE IF EXISTS dw_taxi CASCADE")
@@ -120,7 +117,6 @@ def dw_taxi(cursor):
 
 
 
-#	(taxi_id, tempo_id, localI_id, localF_id, nViagens, tempoTotal)
 def dw_taxi_services(cursor):
 
 	cursor.execute("DROP TABLE IF EXISTS dw_taxi_services CASCADE")
@@ -174,9 +170,9 @@ def dw_taxi_services(cursor):
 		cursor.execute("insert into dw_taxi_services (id, taxi_id, tempo_id, local_I_id, local_F_id, tempoTotal) values (%s, %s, %s, %s, %s, %s)", (i+1, taxi_id, tempo_id, local_id_I, local_id_F, tempoTotal,))
 
 		print i
-		
-
-
+                
+                if i == 1000:
+                    break
 
 if __name__ == "__main__":
 	conn_string = "dbname='guest' user='guest' host = '127.0.0.1' password=''"
