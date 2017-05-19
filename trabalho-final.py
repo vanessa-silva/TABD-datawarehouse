@@ -109,6 +109,17 @@ def dw_taxi(cursor):
 
 def dw_taxi_services(cursor):
 
+	cursor.execute("SELECT taxi_id, T.tempo_id, (SELECT id FROM taxi_stands WHERE st_distance(initial_point, location)  = (SELECT MIN(st_distance(initial_point, location)) FROM taxi_stands)), (SELECT id FROM taxi_stands WHERE st_distance(final_point, location)  = (SELECT MIN(st_distance(final_point, location)) FROM taxi_stands)), SUM(final_ts - initial_ts) * INTERVAL '1 second' FROM taxi_services INNER JOIN dw_tempo as T ON cast((TIME '00:00' + initial_ts * INTERVAL '1 second') as text) = T.hora_i AND cast(date_part('day', (TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second')) as text) = T.dia_i AND cast(date_part('month', (TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second')) as text) = T.mes_i AND cast((TIME '00:00' + final_ts * INTERVAL '1 second') as text) = T.hora_f AND cast(date_part('day', (TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second')) as text) = T.dia_f AND cast(date_part('month', (TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second')) as text) = T.mes_f WHERE final_ts > initial_ts GROUP BY 1,2,3,4 ORDER BY 1,2 ASC")
+	nTuplos = cursor.fetchall()
+
+	for i in range(0,len(nTuplos)):
+		cursor.execute("insert into dw_taxi_services (id, taxi_id, tempo_id, local_I_id, local_F_id, tempoTotal) values (%s, %s, %s, %s, %s, %s)", (i+1, nTuplos[i][0], nTuplos[i][1], nTuplos[i][2], nTuplos[i][3], str(nTuplos[i][4]),))	
+
+
+
+
+def dw_taxi_services2(cursor):
+
 	#local_I_id
 	cursor.execute("select st_astext(initial_point) from taxi_services")
 	pontoI = cursor.fetchall()
@@ -163,11 +174,12 @@ def dw_taxi_services(cursor):
 
 def queryy(cursor):
 
-	cursor.execute("SELECT taxi_id, T.tempo_id, (SELECT id FROM taxi_stands WHERE st_distance(initial_point, location)  = (SELECT MIN(st_distance(initial_point, location)) FROM taxi_stands)), (SELECT id FROM taxi_stands WHERE st_distance(final_point, location)  = (SELECT MIN(st_distance(final_point, location)) FROM taxi_stands)), SUM(final_ts - initial_ts) * INTERVAL '1 second' FROM taxi_services INNER JOIN dw_tempo as T ON cast((TIME '00:00' + initial_ts * INTERVAL '1 second') as text) = T.hora_i AND cast(date_part('day', (TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second')) as text) = T.dia_i AND cast(date_part('month', (TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second')) as text) = T.mes_i AND cast((TIME '00:00' + final_ts * INTERVAL '1 second') as text) = T.hora_f AND cast(date_part('day', (TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second')) as text) = T.dia_f AND cast(date_part('month', (TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second')) as text) = T.mes_f WHERE final_ts > initial_ts GROUP BY 1,2,3,4 ORDER BY 1 DESC")
+	cursor.execute("SELECT taxi_id, T.tempo_id, (SELECT id FROM taxi_stands WHERE st_distance(initial_point, location)  = (SELECT MIN(st_distance(initial_point, location)) FROM taxi_stands)), (SELECT id FROM taxi_stands WHERE st_distance(final_point, location)  = (SELECT MIN(st_distance(final_point, location)) FROM taxi_stands)), SUM(final_ts - initial_ts) * INTERVAL '1 second' FROM taxi_services INNER JOIN dw_tempo as T ON cast((TIME '00:00' + initial_ts * INTERVAL '1 second') as text) = T.hora_i AND cast(date_part('day', (TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second')) as text) = T.dia_i AND cast(date_part('month', (TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second')) as text) = T.mes_i AND cast((TIME '00:00' + final_ts * INTERVAL '1 second') as text) = T.hora_f AND cast(date_part('day', (TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second')) as text) = T.dia_f AND cast(date_part('month', (TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second')) as text) = T.mes_f WHERE final_ts > initial_ts GROUP BY 1,2,3,4 ORDER BY 1,2 ASC")
 	nTuplos = cursor.fetchall()
 
 	for i in range(0,len(nTuplos)):
 		print nTuplos[i]
+		print i 
 
 
 if __name__ == "__main__":
@@ -182,9 +194,10 @@ if __name__ == "__main__":
 	#dw_stand(cursor)			 #ESTA CORRETA
 	#dw_local(cursor)			 #ESTA CORRETA
 	
+	#dw_taxi_services(cursor)	 #esta com a query prematura
 
-	queryy(cursor)
-	#dw_taxi_services(cursor)
+	#queryy(cursor)
+	
 
 	conn.commit()
 	cursor.close()
