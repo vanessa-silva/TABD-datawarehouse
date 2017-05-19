@@ -1,0 +1,47 @@
+##Consultas OLAP com CUBE
+
+select taxi_id, tempo_id, tempototal as total_time from dw_taxi_services group by cube(taxi_id, tempo_id, tempototal);
+select stand_id, freguesia, count(id) as num_services from dw_taxi_services, dw_local group by cube(stand_id, freguesia);
+
+
+
+##Cross-tabulation
+
+select concelho, freguesia, local_id, count(stand_id) as num_stands from dw_local where concelho = 'PORTO' group by concelho, freguesia, local_id UNION ALL select concelho, freguesia, NULL, count(stand_id) from dw_local where concelho = 'PORTO' group by concelho, freguesia UNION ALL select concelho, NULL, NULL, count(stand_id) from dw_local where concelho = 'PORTO' group by concelho UNION ALL select NULL, NULL, NULL, count(stand_id) from dw_local where concelho = 'PORTO' order by concelho, freguesia, local_id;
+
+
+
+
+
+
+#IDEIAS
+
+##SIMPLES
+
+-	numero de serviços de cada taxi
+	select taxi_id,  count(*) from dw_taxi_services group by 1 order by 1
+
+-	tempo total em cada taxi
+
+	
+
+-	stand que iniciou mais serviços
+	select dw_stand.nome, count(*) from dw_taxi_services, dw_local, dw_stand group by 1 order by 2 limit 1select local_I_id, count(*) from dw_taxi_services order by 2 limit 1 
+
+-	freguesia com mais serviços
+
+
+-	qual taxi faz mais serviços em cada stand
+
+
+- 	praça inicial e final mais frequente para cada taxi
+	select local_i_id, count(*) from dw_taxi_services group by 1 order by 2 limit 1
+	select local_f_id, count(*) from dw_taxi_services group by 1 order by 2 limit 1
+
+-	serviço com maior distancia
+
+
+-	numero de praças em cada freguesia
+
+##
+

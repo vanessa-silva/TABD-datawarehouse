@@ -25,7 +25,7 @@ SET default_with_oids = false;
 
 CREATE TABLE dw_local (
     local_id integer NOT NULL,
-    stand_id integer NOT NULL,
+    stand_id integer,
     freguesia text NOT NULL,
     concelho text NOT NULL
 );
@@ -46,7 +46,7 @@ COPY dw_local (local_id, stand_id, freguesia, concelho) FROM stdin;
 6	6	PARANHOS	PORTO
 7	7	LORDELO DO OURO	PORTO
 8	8	CAMPANHA	PORTO
-9	9	S	PORTO
+9	9	SE	PORTO
 10	10	SANTO ILDEFONSO	PORTO
 11	11	PARANHOS	PORTO
 12	12	MASSARELOS	PORTO
@@ -94,7 +94,7 @@ COPY dw_local (local_id, stand_id, freguesia, concelho) FROM stdin;
 54	54	MASSARELOS	PORTO
 55	55	CAMPANHA	PORTO
 56	56	BONFIM	PORTO
-57	57	S	PORTO
+57	57	SE	PORTO
 58	58	SANTO ILDEFONSO	PORTO
 59	59	LORDELO DO OURO	PORTO
 60	60	SANTO ILDEFONSO	PORTO
@@ -109,7 +109,15 @@ COPY dw_local (local_id, stand_id, freguesia, concelho) FROM stdin;
 --
 
 ALTER TABLE ONLY dw_local
-    ADD CONSTRAINT dw_local_pkey PRIMARY KEY (local_id, stand_id);
+    ADD CONSTRAINT dw_local_pkey PRIMARY KEY (local_id);
+
+
+--
+-- Name: dw_local_stand_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: guest
+--
+
+ALTER TABLE ONLY dw_local
+    ADD CONSTRAINT dw_local_stand_id_fkey FOREIGN KEY (stand_id) REFERENCES dw_stand(stand_id);
 
 
 --
