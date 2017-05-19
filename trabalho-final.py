@@ -5,8 +5,6 @@ import pprint
 import datetime
  
 
-
-
 def dw_stand(cursor):
 
 	cursor.execute("DROP TABLE IF EXISTS dw_stand CASCADE")
@@ -92,27 +90,17 @@ def dw_taxi_services(cursor):
 
 
 
-def consultasOLAP(cursor):
-
-	print "colsulta" 
-
-
-
 if __name__ == "__main__":
 	conn_string = "dbname='guest' user='guest' host = '127.0.0.1' password=''"
 	conn = psycopg2.connect(conn_string)
 	conn.set_client_encoding('LATIN9')
 	cursor = conn.cursor()
  
-	#dw_tempo(cursor)            #ESTA CORRETA
-	#dw_taxi(cursor)		#ESTA CORRETA
-	#dw_stand(cursor)			 #ESTA CORRETA
-	#dw_local(cursor)			 #ESTA CORRETA
-	
-	dw_taxi_services(cursor)	 #esta com a query prematura
-
-	consultasOLAP(cursor)
-	
+	dw_tempo(cursor)	
+	dw_taxi(cursor)		
+	dw_stand(cursor)
+	dw_local(cursor)			
+	dw_taxi_services(cursor)	
 
 	conn.commit()
 	cursor.close()
