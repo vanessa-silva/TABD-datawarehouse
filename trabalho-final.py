@@ -80,15 +80,10 @@ def dw_taxi_services(cursor):
 	cursor.execute("DROP TABLE IF EXISTS dw_taxi_services CASCADE")
    	cursor.execute("create table dw_taxi_services(id int not null, taxi_id int not null, tempo_id int not null, local_I_id int null, local_F_id int null, tempoTotal text null, PRIMARY KEY (id), FOREIGN KEY(taxi_id) REFERENCES dw_taxi (taxi_id), FOREIGN KEY(tempo_id) REFERENCES dw_tempo (tempo_id), FOREIGN KEY(local_I_id) REFERENCES dw_local (local_id), FOREIGN KEY(local_F_id) REFERENCES dw_local (local_id))")
 
-
 	cursor.execute("SELECT dw_taxi.taxi_id, T.tempo_id, (SELECT id FROM taxi_stands WHERE st_distance(initial_point, location)  = (SELECT MIN(st_distance(initial_point, location)) FROM taxi_stands)), (SELECT id FROM taxi_stands WHERE st_distance(final_point, location)  = (SELECT MIN(st_distance(final_point, location)) FROM taxi_stands)), SUM((timestamp 'epoch' + final_ts * interval '1 second')-(timestamp 'epoch' + initial_ts * interval '1 second')) FROM taxi_services INNER JOIN dw_taxi ON taxi_services.taxi_id=dw_taxi.nLicenca INNER JOIN dw_tempo as T ON cast((TIME '00:00' + initial_ts * INTERVAL '1 second') as text) = T.hora_i AND cast(date_part('day', (TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second')) as text) = T.dia_i AND cast(date_part('month', (TIMESTAMP 'epoch' + initial_ts * INTERVAL '1 second')) as text) = T.mes_i AND cast((TIME '00:00' + final_ts * INTERVAL '1 second') as text) = T.hora_f AND cast(date_part('day', (TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second')) as text) = T.dia_f AND cast(date_part('month', (TIMESTAMP 'epoch' + final_ts * INTERVAL '1 second')) as text) = T.mes_f  GROUP BY 1,2,3,4 ORDER BY 1,2 ASC")
 	nTuplos = cursor.fetchall()
 
 	for i in range(len(nTuplos)):
-		#cursor.execute("select st_distance(initial_point, location) from taxi_services, taxi_stands where taxi_stands.id = %s", (nTuplos[i][2],))
-		#number = cursor.fetchall()
-		#if float(number) > 0.07:
-			#print number[0][0];
 		cursor.execute("insert into dw_taxi_services (id, taxi_id, tempo_id, local_I_id, local_F_id, tempoTotal) values (%s, %s, %s, %s, %s, %s)", (i+1, nTuplos[i][0], nTuplos[i][1], nTuplos[i][2], nTuplos[i][3], str(nTuplos[i][4]),))	
 
 

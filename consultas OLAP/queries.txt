@@ -1,0 +1,22 @@
+#Consulta de cross-tabultaion
+select concelho, freguesia, local_id, count(stand_id) as num_stands from dw_local where concelho = 'PORTO' group by concelho, freguesia, local_id UNION ALL select concelho, freguesia, NULL, count(stand_id) from dw_local where concelho = 'PORTO' group by concelho, freguesia UNION ALL select concelho, NULL, NULL, count(stand_id) from dw_local where concelho = 'PORTO' group by concelho UNION ALL select NULL, NULL, NULL, count(stand_id) from dw_local where concelho = 'PORTO' order by concelho, freguesia, local_id;
+
+#Consulta do histograma
+select mes, taxi, max(cast(tempototal as interval)) from (select mes_i as mes, nlicenca as taxi, tempototal from dw_taxi_services inner join dw_taxi on dw_taxi.taxi_id = dw_taxi_services.taxi_id inner join dw_tempo on dw_tempo.tempo_id = dw_taxi_services.tempo_id) as aux group by mes, taxi limit 10;
+
+#Outra consulta do histograma
+select mes, taxi, count(*) from (select mes_i as mes, nlicenca as taxi from dw_taxi_services inner join dw_taxi on dw_taxi_services.taxi_id = dw_taxi.taxi_id inner join dw_tempo on dw_taxi_services.tempo_id = dw_tempo.tempo_id) as aux group by mes, taxi limit 10; 
+
+#Outra consulta do histograma
+select mes, freguesia, sum(cast(tempototal as interval)) from (select mes_i as mes, freguesia, tempototal from dw_taxi_services inner join dw_local on dw_local.local_id = dw_taxi_services.local_i_id inner join dw_stand on dw_stand.stand_id = dw_local.stand_id inner join dw_tempo on dw_tempo.tempo_id = dw_taxi_services.tempo_id) as aux group by mes, freguesia limit 10;
+
+#Consulta do tempo total por nlicenca
+select dw_taxi.nlicenca, sum(cast(tempototal as interval)) as total_time from dw_taxi_services inner join dw_taxi on dw_taxi.taxi_id = dw_taxi_services.taxi_id group by cube(dw_taxi.nlicenca);
+
+#Consulta do Castanheira
+ select freguesia, count(mes_i), sum(case when mes_i = '1' then 1 else 0 end) Janeiro,                                                sum(case when mes_i = '2' then 1 else 0 end) Fevereiro,                                                                                                                 sum(case when mes_i = '3' then 1 else 0 end) Março,                                                                                                                     sum(case when mes_i = '4' then 1 else 0 end) Abril,                                                                                                                     sum(case when mes_i = '5' then 1 else 0 end) Maio,                                                                                                                      sum(case when mes_i = '6' then 1 else 0 end) Junho,                                                                                                                     sum(case when mes_i = '7' then 1 else 0 end) Julho,                                                                                                                     sum(case when mes_i = '8' then 1 else 0 end) Agosto,                                                                                                                    sum(case when mes_i = '9' then 1 else 0 end) Setembro,                                                                                                                  sum(case when mes_i = '10' then 1 else 0 end) Outubro,                                                                                                                  sum(case when mes_i = '11' then 1 else 0 end) Novembro,                                                                                                                 sum(case when mes_i = '12' then 1 else 0 end) Dezembro                                                                                                                  from (select t.mes_i, l.freguesia from dw_taxi_services ts inner join dw_tempo t on ts.tempo_id = t.tempo_id inner join dw_local l on l.local_id = ts.local_i_id) as cs group by freguesia order by freguesia;  
+
+#Consultas que ficaram sem efeito
+select taxi_id, tempo_id, sum(cast(tempototal as interval)) as total_time from dw_taxi_services group by cube(taxi_id, tempo_id);
+select stand_id, freguesia, count(id) as num_services from dw_taxi_services, dw_local group by cube(stand_id, freguesia);
+
